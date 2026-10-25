@@ -51,11 +51,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EditorConfigFiles Remove="D:\SteamLibrary\steamapps\common\RimWorld\Mods\MechanoidBlink\Source\.editorconfig" />
+    <EditorConfigFiles Remove=".editorconfig" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="D:\SteamLibrary\steamapps\common\RimWorld\Mods\MechanoidBlink\Source\.editorconfig" />
+    <None Include=".editorconfig" />
   </ItemGroup>
 
 </Project>
