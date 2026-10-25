@@ -1,6 +1,7 @@
 > [!CAUTION]
-> If you have PTSD of AI, you shouldn't use/read this mod (and code).
-> This mod uses AI for coding.
+> This mod (including code) was developed with the assistance of AI.
+> If you prefer entirely human-written code or have concerns about AI-assisted
+> projects, please keep this in mind before using or inspecting the files.
 
 # Mechanoid Blink
 
