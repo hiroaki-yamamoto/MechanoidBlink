@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AutoBlink;
+using RimWorld;
 using Verse;
 
 namespace MechanoidBlink.Core;
@@ -23,6 +24,10 @@ namespace MechanoidBlink.Core;
 public static class MechanoidBlinkInjector
 {
     public const string ProfileDefName = "MechanoidBlink_Profile";
+    public const string DefaultBeforeSoundDefName = "AutoBlink_Skip_Small";
+    public const string DefaultAfterSoundDefName = "AutoBlink_Skip_Exit_Small";
+    public const string DefaultBeforeEffectDefName = "Skip_Entry";
+    public const string DefaultAfterEffectDefName = "Skip_ExitNoDelay";
 
     /// <summary>
     /// Injects <see cref="CompProperties_AutoBlinkSource"/> into all mechanoids registered in the Mechanoid framework
@@ -60,6 +65,36 @@ public static class MechanoidBlinkInjector
     }
 
     /// <summary>
+    /// Ensures that the specified <see cref="AutoBlinkProfileDef"/> has valid departure/arrival sounds
+    /// and visual effect definitions assigned.
+    /// </summary>
+    /// <remarks>
+    /// Executes in O(1) time and O(1) space via DefDatabase O(1) dictionary lookups.
+    /// Existing non-null configurations on <paramref name="profile"/> are preserved.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// MechanoidBlinkInjector.EnsureProfileFx(profile);
+    /// Assert.IsNotNull(profile.beforeSound);
+    /// Assert.IsNotNull(profile.afterSound);
+    /// Assert.IsNotNull(profile.beforeEffect);
+    /// Assert.IsNotNull(profile.afterEffect);
+    /// </code>
+    /// </example>
+    /// <param name="profile">The target <see cref="AutoBlinkProfileDef"/> to verify and populate.</param>
+    public static void EnsureProfileFx(AutoBlinkProfileDef? profile)
+    {
+        if (profile == null) return;
+
+        profile.beforeSound ??= DefDatabase<SoundDef>.GetNamedSilentFail(DefaultBeforeSoundDefName);
+        profile.afterSound ??= DefDatabase<SoundDef>.GetNamedSilentFail(DefaultAfterSoundDefName);
+        profile.beforeEffect ??= DefDatabase<EffecterDef>.GetNamedSilentFail(DefaultBeforeEffectDefName)
+            ?? EffecterDefOf.Skip_Entry;
+        profile.afterEffect ??= DefDatabase<EffecterDef>.GetNamedSilentFail(DefaultAfterEffectDefName)
+            ?? EffecterDefOf.Skip_ExitNoDelay;
+    }
+
+    /// <summary>
     /// Injects <see cref="CompProperties_AutoBlinkSource"/> into a specific <see cref="ThingDef"/> if not already present,
     /// and marks the definition as an active AutoBlink source in <c>AutoBlink.BlinkSourceDefCache</c>.
     /// Excludes non-mechanoids and corpses.
@@ -76,14 +111,20 @@ public static class MechanoidBlinkInjector
             def.comps = new List<CompProperties>();
         }
 
+        EnsureProfileFx(profile);
+
         // Check if CompProperties_AutoBlinkSource already exists
         CompProperties_AutoBlinkSource? existingComp = def.comps.Find(c => c is CompProperties_AutoBlinkSource) as CompProperties_AutoBlinkSource;
         if (existingComp != null)
         {
-            // If already present, ensure its profile allows hostile blinking
-            if (existingComp.profile != null && existingComp.profile.playerFactionOnly)
+            // If already present, ensure its profile allows hostile blinking and has FX configured
+            if (existingComp.profile != null)
             {
-                existingComp.profile.playerFactionOnly = false;
+                if (existingComp.profile.playerFactionOnly)
+                {
+                    existingComp.profile.playerFactionOnly = false;
+                }
+                EnsureProfileFx(existingComp.profile);
             }
 
             AutoBlinkBridge.MarkThingDefHasSource(def, hasSource: true);
@@ -107,6 +148,7 @@ public static class MechanoidBlinkInjector
         if (customProfile != null)
         {
             customProfile.playerFactionOnly = false;
+            EnsureProfileFx(customProfile);
             return customProfile;
         }
 
@@ -117,6 +159,7 @@ public static class MechanoidBlinkInjector
         if (fallback != null)
         {
             fallback.playerFactionOnly = false;
+            EnsureProfileFx(fallback);
         }
 
         return fallback;

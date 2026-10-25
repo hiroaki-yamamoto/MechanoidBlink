@@ -5,6 +5,10 @@
     <label>mechanoid auto blink</label>
     <description>Automatically teleports along the current walking path for mechanoids.</description>
     <playerFactionOnly>false</playerFactionOnly>
+    <beforeSound>AutoBlink_Skip_Small</beforeSound>
+    <afterSound>AutoBlink_Skip_Exit_Small</afterSound>
+    <beforeEffect>Skip_Entry</beforeEffect>
+    <afterEffect>Skip_ExitNoDelay</afterEffect>
   </AutoBlink.AutoBlinkProfileDef>
 </Defs>
 

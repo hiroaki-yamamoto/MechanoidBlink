@@ -65,6 +65,11 @@ public class AutoBlinkIntegrationTests
             FleshTypeDefOf.Normal = new FleshTypeDef { defName = "Normal" };
         }
 
+        EnsureSoundDefRegistered(MechanoidBlinkInjector.DefaultBeforeSoundDefName);
+        EnsureSoundDefRegistered(MechanoidBlinkInjector.DefaultAfterSoundDefName);
+        EnsureEffecterDefRegistered(MechanoidBlinkInjector.DefaultBeforeEffectDefName);
+        EnsureEffecterDefRegistered(MechanoidBlinkInjector.DefaultAfterEffectDefName);
+
         EnsureProfileDefRegistered();
         MechanoidRegistry.ResetCache();
     }
@@ -113,6 +118,14 @@ public class AutoBlinkIntegrationTests
         Assert.IsNotNull(sourceComp, "Mechanoid ThingDef must contain CompProperties_AutoBlinkSource");
         Assert.IsNotNull(sourceComp.profile, "Injected source must reference a valid AutoBlinkProfileDef");
         Assert.IsFalse(sourceComp.profile.playerFactionOnly, "Mechanoid profile must allow hostile blinking when enabled");
+        Assert.IsNotNull(sourceComp.profile.beforeSound, "beforeSound must be configured");
+        Assert.AreEqual(MechanoidBlinkInjector.DefaultBeforeSoundDefName, sourceComp.profile.beforeSound.defName);
+        Assert.IsNotNull(sourceComp.profile.afterSound, "afterSound must be configured");
+        Assert.AreEqual(MechanoidBlinkInjector.DefaultAfterSoundDefName, sourceComp.profile.afterSound.defName);
+        Assert.IsNotNull(sourceComp.profile.beforeEffect, "beforeEffect must be configured");
+        Assert.AreEqual(MechanoidBlinkInjector.DefaultBeforeEffectDefName, sourceComp.profile.beforeEffect.defName);
+        Assert.IsNotNull(sourceComp.profile.afterEffect, "afterEffect must be configured");
+        Assert.AreEqual(MechanoidBlinkInjector.DefaultAfterEffectDefName, sourceComp.profile.afterEffect.defName);
 
         Assert.IsTrue(
             AutoBlinkBridge.HasCachedThingSource(mechDef),
@@ -123,6 +136,65 @@ public class AutoBlinkIntegrationTests
         Assert.IsFalse(
             AutoBlinkBridge.HasCachedThingSource(humanDef),
             "Non-mechanoid ThingDef must NOT be marked as having an AutoBlink source");
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="MechanoidBlinkInjector.EnsureProfileFx"/> configures the required
+    /// departure sound (<c>AutoBlink_Skip_Small</c>), arrival sound (<c>AutoBlink_Skip_Exit_Small</c>),
+    /// departure effect (<c>Skip_Entry</c>), and arrival effect (<c>Skip_ExitNoDelay</c>) on a profile
+    /// where those fields were previously unassigned.
+    /// </summary>
+    [TestMethod]
+    public void Test_EnsureProfileFx_PopulatesMissingSoundsAndEffects()
+    {
+        AutoBlinkProfileDef profile = new()
+        {
+            defName = "Test_Profile_Without_Fx",
+            beforeSound = null,
+            afterSound = null,
+            beforeEffect = null,
+            afterEffect = null
+        };
+
+        MechanoidBlinkInjector.EnsureProfileFx(profile);
+
+        Assert.IsNotNull(profile.beforeSound, "beforeSound must be assigned by EnsureProfileFx");
+        Assert.AreEqual(MechanoidBlinkInjector.DefaultBeforeSoundDefName, profile.beforeSound.defName);
+        Assert.IsNotNull(profile.afterSound, "afterSound must be assigned by EnsureProfileFx");
+        Assert.AreEqual(MechanoidBlinkInjector.DefaultAfterSoundDefName, profile.afterSound.defName);
+        Assert.IsNotNull(profile.beforeEffect, "beforeEffect must be assigned by EnsureProfileFx");
+        Assert.AreEqual(MechanoidBlinkInjector.DefaultBeforeEffectDefName, profile.beforeEffect.defName);
+        Assert.IsNotNull(profile.afterEffect, "afterEffect must be assigned by EnsureProfileFx");
+        Assert.AreEqual(MechanoidBlinkInjector.DefaultAfterEffectDefName, profile.afterEffect.defName);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="MechanoidBlinkInjector.EnsureProfileFx"/> preserves custom sound
+    /// and visual effect definitions when they are already populated on the profile.
+    /// </summary>
+    [TestMethod]
+    public void Test_EnsureProfileFx_PreservesExistingCustomFx()
+    {
+        SoundDef customBeforeSound = new() { defName = "Custom_Before_Sound" };
+        SoundDef customAfterSound = new() { defName = "Custom_After_Sound" };
+        EffecterDef customBeforeEffect = new() { defName = "Custom_Before_Effect" };
+        EffecterDef customAfterEffect = new() { defName = "Custom_After_Effect" };
+
+        AutoBlinkProfileDef profile = new()
+        {
+            defName = "Test_Profile_With_Custom_Fx",
+            beforeSound = customBeforeSound,
+            afterSound = customAfterSound,
+            beforeEffect = customBeforeEffect,
+            afterEffect = customAfterEffect
+        };
+
+        MechanoidBlinkInjector.EnsureProfileFx(profile);
+
+        Assert.AreSame(customBeforeSound, profile.beforeSound, "Existing beforeSound must be preserved");
+        Assert.AreSame(customAfterSound, profile.afterSound, "Existing afterSound must be preserved");
+        Assert.AreSame(customBeforeEffect, profile.beforeEffect, "Existing beforeEffect must be preserved");
+        Assert.AreSame(customAfterEffect, profile.afterEffect, "Existing afterEffect must be preserved");
     }
 
     [TestMethod]
@@ -442,7 +514,25 @@ public class AutoBlinkIntegrationTests
             iconField.SetValue(profile, stubTex);
         }
 
+        MechanoidBlinkInjector.EnsureProfileFx(profile);
+
         return profile;
+    }
+
+    private static void EnsureSoundDefRegistered(string defName)
+    {
+        if (DefDatabase<SoundDef>.GetNamedSilentFail(defName) == null)
+        {
+            DefDatabase<SoundDef>.Add(new SoundDef { defName = defName });
+        }
+    }
+
+    private static void EnsureEffecterDefRegistered(string defName)
+    {
+        if (DefDatabase<EffecterDef>.GetNamedSilentFail(defName) == null)
+        {
+            DefDatabase<EffecterDef>.Add(new EffecterDef { defName = defName });
+        }
     }
 
     private static ThingDef RegisterOrGetThingDef(string defName, ThingCategory category, bool isMechanoid, Type thingClass)
