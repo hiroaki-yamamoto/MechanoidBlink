@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <MechanoidBlink_ModName>Mechanoid Blink</MechanoidBlink_ModName>
+  <MechanoidBlink_EnableFriendly>味方メカノイドへのAutoBlink統合</MechanoidBlink_EnableFriendly>
+  <MechanoidBlink_EnableFriendly_Desc>有効にすると、味方メカノイドがAutoBlinkアビリティを使用できるようになります。</MechanoidBlink_EnableFriendly_Desc>
+  <MechanoidBlink_EnableHostile>敵対メカノイドへのAutoBlink統合</MechanoidBlink_EnableHostile>
+  <MechanoidBlink_EnableHostile_Desc>有効にすると、敵対メカノイドがAutoBlinkアビリティを使用できるようになります。</MechanoidBlink_EnableHostile_Desc>
+  <MechanoidBlink_SelectMechanoids>AutoBlinkを使用可能なメカノイド種類の選択:</MechanoidBlink_SelectMechanoids>
+  <MechanoidBlink_SelectAll>すべて選択</MechanoidBlink_SelectAll>
+  <MechanoidBlink_DeselectAll>すべて解除</MechanoidBlink_DeselectAll>
+  <MechanoidBlink_Search>検索:</MechanoidBlink_Search>
+</LanguageData>
+

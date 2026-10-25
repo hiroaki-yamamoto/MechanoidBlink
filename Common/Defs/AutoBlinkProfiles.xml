@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <AutoBlink.AutoBlinkProfileDef ParentName="AutoBlinkStandardProfile">
+    <defName>MechanoidBlink_Profile</defName>
+    <label>mechanoid auto blink</label>
+    <description>Automatically teleports along the current walking path for mechanoids.</description>
+    <playerFactionOnly>false</playerFactionOnly>
+  </AutoBlink.AutoBlinkProfileDef>
+</Defs>
+

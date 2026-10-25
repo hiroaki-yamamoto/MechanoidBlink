@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <MechanoidBlink_ModName>Mechanoid Blink</MechanoidBlink_ModName>
+  <MechanoidBlink_EnableFriendly>Integrate AutoBlink into friendly mechanoids</MechanoidBlink_EnableFriendly>
+  <MechanoidBlink_EnableFriendly_Desc>If enabled, friendly mechanoids can use AutoBlink abilities.</MechanoidBlink_EnableFriendly_Desc>
+  <MechanoidBlink_EnableHostile>Integrate AutoBlink into hostile mechanoids</MechanoidBlink_EnableHostile>
+  <MechanoidBlink_EnableHostile_Desc>If enabled, hostile mechanoids can use AutoBlink abilities.</MechanoidBlink_EnableHostile_Desc>
+  <MechanoidBlink_SelectMechanoids>Choose which mechanoid types can use AutoBlink:</MechanoidBlink_SelectMechanoids>
+  <MechanoidBlink_SelectAll>Select All</MechanoidBlink_SelectAll>
+  <MechanoidBlink_DeselectAll>Deselect All</MechanoidBlink_DeselectAll>
+  <MechanoidBlink_Search>Search:</MechanoidBlink_Search>
+</LanguageData>
+

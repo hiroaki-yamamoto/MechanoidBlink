@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Project Path="Source.csproj" />
+  <Project Path="Tests/MechanoidBlink.Tests.csproj" />
+</Solution>
