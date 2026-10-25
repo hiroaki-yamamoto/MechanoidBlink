@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <name>Mechanoid Blink</name>
-  <author>Hiroaki Yamamoto</author>
+  <author>Hiroaki Yamamoto and Gemini</author>
   <packageId>autoblink.mechanoid</packageId>
   <supportedVersions>
     <li>1.7</li>
