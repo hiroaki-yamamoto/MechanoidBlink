@@ -1,5 +1,4 @@
 using System;
-using AutoBlink;
 using HarmonyLib;
 using MechanoidBlink.Core;
 using Verse;
@@ -8,8 +7,7 @@ namespace MechanoidBlink;
 
 /// <summary>
 /// Startup initializer executed after all Defs and mods are loaded.
-/// Applies Harmony patches, injects AutoBlink into mechanoid ThingDefs,
-/// and registers the AutoBlink policy.
+/// Applies Harmony patches and synchronizes mechanoid blink Hediffs.
 /// </summary>
 /// <remarks>
 /// Initialization stages are isolated so a failure in one stage logs an error without blocking
@@ -24,7 +22,6 @@ namespace MechanoidBlink;
 public static class MechanoidBlinkInitializer
 {
     public const string HarmonyId = "mechanoidblink.patch";
-    private static IDisposable? policyRegistration;
 
     static MechanoidBlinkInitializer()
     {
@@ -32,15 +29,14 @@ public static class MechanoidBlinkInitializer
     }
 
     /// <summary>
-    /// Applies Harmony patches, initializes settings defaults, injects AutoBlink components
-    /// into mechanoid definitions (synchronizing <c>BlinkSourceDefCache</c>), and registers
-    /// the Mechanoid Blink policy with <see cref="AutoBlinkApi"/>.
+    /// Applies Harmony patches, initializes settings defaults, and synchronizes the Mechanoid Blink
+    /// Hediff across any already-spawned mechanoids.
     /// </summary>
     public static void Initialize()
     {
         ApplyHarmonyPatches();
-        InjectMechanoidDefinitions();
-        RegisterAutoBlinkPolicy();
+        InitializeSettings();
+        SyncActiveMechanoids();
     }
 
     private static void ApplyHarmonyPatches()
@@ -62,7 +58,7 @@ public static class MechanoidBlinkInitializer
         }
     }
 
-    private static void InjectMechanoidDefinitions()
+    private static void InitializeSettings()
     {
         try
         {
@@ -70,35 +66,22 @@ public static class MechanoidBlinkInitializer
             {
                 MechanoidBlinkMod.Settings.EnsureInitialized(MechanoidRegistry.AllMechanoidDefNames);
             }
-
-            _ = MechanoidBlinkInjector.InjectAll();
         }
         catch (Exception ex)
         {
-            Log.Error($"[MechanoidBlink] Exception while injecting mechanoid AutoBlink definitions: {ex}");
+            Log.Error($"[MechanoidBlink] Exception while initializing mechanoid settings: {ex}");
         }
     }
 
-    private static void RegisterAutoBlinkPolicy()
+    private static void SyncActiveMechanoids()
     {
         try
         {
-            if (MechanoidBlinkMod.PermissionChecker == null)
-            {
-                return;
-            }
-
-            policyRegistration?.Dispose();
-            policyRegistration = AutoBlinkApi.RegisterPolicy(
-                "MechanoidBlink",
-                new MechanoidBlinkPolicy(MechanoidBlinkMod.PermissionChecker),
-                priority: 1000);
-            Log.Message("[MechanoidBlink] AutoBlink policy registered successfully.");
+            MechanoidBlinkHediffManager.UpdateAllMechanoids();
         }
         catch (Exception ex)
         {
-            Log.Error($"[MechanoidBlink] Exception while registering AutoBlink policy: {ex}");
+            Log.Error($"[MechanoidBlink] Exception while synchronizing active mechanoids: {ex}");
         }
     }
 }
-

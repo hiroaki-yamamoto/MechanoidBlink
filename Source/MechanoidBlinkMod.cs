@@ -34,13 +34,12 @@ public class MechanoidBlinkMod : Mod
     }
 
     /// <summary>
-    /// Persists mod settings and notifies active mechanoid blink controllers so newly enabled
-    /// or disabled mechanoids respond immediately without requiring a save reload.
+    /// Persists mod settings and batch-updates all active mechanoids so newly enabled
+    /// or disabled mechanoids immediately receive or lose the Mechanoid Blink Hediff.
     /// </summary>
     public override void WriteSettings()
     {
         base.WriteSettings();
-        AutoBlinkBridge.NotifyMechanoidControllersSettingsChanged();
+        MechanoidBlinkHediffManager.UpdateAllMechanoids();
     }
 }
-

@@ -26,6 +26,9 @@ public static class MechanoidBlinkSettingsUi
         var listing = new Listing_Standard();
         listing.Begin(inRect);
 
+        bool prevFriendly = settings.enableFriendly;
+        bool prevHostile = settings.enableHostile;
+
         // 1. Checkbox: Integrate into friendly mechanoids
         listing.CheckboxLabeled(
             "MechanoidBlink_EnableFriendly".Translate(),
@@ -37,6 +40,11 @@ public static class MechanoidBlinkSettingsUi
             "MechanoidBlink_EnableHostile".Translate(),
             ref settings.enableHostile,
             "MechanoidBlink_EnableHostile_Desc".Translate());
+
+        if (settings.enableFriendly != prevFriendly || settings.enableHostile != prevHostile)
+        {
+            MechanoidBlinkHediffManager.UpdateAllMechanoids();
+        }
 
         listing.Gap(12f);
 
@@ -52,12 +60,14 @@ public static class MechanoidBlinkSettingsUi
         if (Widgets.ButtonText(selectAllRect, "MechanoidBlink_SelectAll".Translate()))
         {
             settings.SelectAll(MechanoidRegistry.AllMechanoidDefNames);
+            MechanoidBlinkHediffManager.UpdateAllMechanoids();
         }
 
         Rect deselectAllRect = new Rect(selectAllRect.xMax + spacing, actionRow.y, buttonWidth, 30f);
         if (Widgets.ButtonText(deselectAllRect, "MechanoidBlink_DeselectAll".Translate()))
         {
             settings.DeselectAll();
+            MechanoidBlinkHediffManager.UpdateAllMechanoids();
         }
 
         // Search bar
@@ -138,6 +148,7 @@ public static class MechanoidBlinkSettingsUi
             if (newChecked != isChecked)
             {
                 settings.SetMechTypeAllowed(def.defName, newChecked);
+                MechanoidBlinkHediffManager.UpdateAllMechanoids();
             }
 
             if (!string.IsNullOrEmpty(def.description))
@@ -151,4 +162,3 @@ public static class MechanoidBlinkSettingsUi
         Widgets.EndScrollView();
     }
 }
-
