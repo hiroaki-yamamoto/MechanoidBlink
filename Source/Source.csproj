@@ -34,10 +34,6 @@
       <HintPath>..\..\..\UnityStubs.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="AutoBlink">
-      <HintPath>..\..\..\..\..\workshop\content\294100\3493889625\1.7\Assemblies\AutoBlink.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
     <Reference Include="Waylith">
       <HintPath>..\..\..\Waylith.dll</HintPath>
       <Private>false</Private>
