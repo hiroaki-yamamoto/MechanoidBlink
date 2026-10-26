@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 using MechanoidBlink.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -20,6 +22,8 @@ public class MechanoidRegistryTests
         {
             FleshTypeDefOf.Normal = new FleshTypeDef { defName = "Normal" };
         }
+
+        MechanoidRegistry.ResetCache();
     }
 
     [TestMethod]
@@ -32,7 +36,7 @@ public class MechanoidRegistryTests
     public void Test_IsMechanoidDef_ValidMechanoidPawn_ReturnsTrue()
     {
         var def = CreateThingDef(
-            defName: "Mech_Centipede",
+            defName: "Mech_Centipede_Test",
             category: ThingCategory.Pawn,
             isMechanoid: true,
             thingClass: typeof(Pawn));
@@ -45,7 +49,7 @@ public class MechanoidRegistryTests
     {
         // RimWorld generated corpses inherit race from the pawn, but have category Item and thingClass Corpse
         var corpseDef = CreateThingDef(
-            defName: "Corpse_Mech_Centipede",
+            defName: "Corpse_Mech_Centipede_Test",
             category: ThingCategory.Item,
             isMechanoid: true,
             thingClass: typeof(Corpse));
@@ -57,7 +61,7 @@ public class MechanoidRegistryTests
     public void Test_IsMechanoidDef_NonMechanoidPawn_ReturnsFalse()
     {
         var def = CreateThingDef(
-            defName: "Human",
+            defName: "Human_Test",
             category: ThingCategory.Pawn,
             isMechanoid: false,
             thingClass: typeof(Pawn));
@@ -70,20 +74,97 @@ public class MechanoidRegistryTests
     {
         var buildingDef = new ThingDef
         {
-            defName = "MechAssembler",
+            defName = "MechAssembler_Test",
             category = ThingCategory.Building
         };
         Assert.IsFalse(MechanoidRegistry.IsMechanoidDef(buildingDef), "Building should not be recognized as mechanoid");
 
         var itemDef = new ThingDef
         {
-            defName = "Steel",
+            defName = "Steel_Test",
             category = ThingCategory.Item
         };
         Assert.IsFalse(MechanoidRegistry.IsMechanoidDef(itemDef), "Item should not be recognized as mechanoid");
     }
 
-    private static ThingDef CreateThingDef(string defName, ThingCategory category, bool isMechanoid, System.Type thingClass)
+    [TestMethod]
+    public void Test_IsMechanoidDef_NullRaceProps_ReturnsFalse()
+    {
+        var def = new ThingDef
+        {
+            defName = "NoRace_Test",
+            category = ThingCategory.Pawn,
+            race = null
+        };
+        Assert.IsFalse(MechanoidRegistry.IsMechanoidDef(def));
+    }
+
+    [TestMethod]
+    public void Test_AllMechanoidDefNames_ReturnsCachedListWithoutAllocations()
+    {
+        // Ensure cache is populated
+        var names1 = MechanoidRegistry.AllMechanoidDefNames;
+        var names2 = MechanoidRegistry.AllMechanoidDefNames;
+
+        Assert.IsNotNull(names1);
+        Assert.IsNotNull(names2);
+        // Verify O(1) zero-allocation cache reuse (same instance returned)
+        Assert.AreSame(names1, names2, "AllMechanoidDefNames should return the same cached instance on repeated calls");
+    }
+
+    [TestMethod]
+    public void Test_IsMechanoidDefName_CaseInsensitiveLookup()
+    {
+        var def = CreateThingDef(
+            defName: "Mech_Lancer_LookupTest",
+            category: ThingCategory.Pawn,
+            isMechanoid: true,
+            thingClass: typeof(Pawn));
+
+        // Add to DefDatabase
+        if (DefDatabase<ThingDef>.GetNamedSilentFail(def.defName) == null)
+        {
+            DefDatabase<ThingDef>.Add(def);
+        }
+
+        MechanoidRegistry.ResetCache();
+
+        Assert.IsTrue(MechanoidRegistry.IsMechanoidDefName("Mech_Lancer_LookupTest"));
+        Assert.IsTrue(MechanoidRegistry.IsMechanoidDefName("mech_lancer_lookuptest"), "Lookup should be case-insensitive");
+        Assert.IsFalse(MechanoidRegistry.IsMechanoidDefName("NonExistent_Def"));
+        Assert.IsFalse(MechanoidRegistry.IsMechanoidDefName(null));
+        Assert.IsFalse(MechanoidRegistry.IsMechanoidDefName(string.Empty));
+    }
+
+    [TestMethod]
+    public void Test_CustomRegistryInstance_CanBeInjected()
+    {
+        var original = MechanoidRegistry.Instance;
+        try
+        {
+            var mock = new FakeMechanoidRegistry();
+            MechanoidRegistry.Instance = mock;
+
+            Assert.AreSame(mock, MechanoidRegistry.Instance);
+            Assert.IsTrue(MechanoidRegistry.IsMechanoidDefName("MockMech"));
+            Assert.IsFalse(MechanoidRegistry.IsMechanoidDefName("OtherMech"));
+        }
+        finally
+        {
+            MechanoidRegistry.Instance = original;
+        }
+    }
+
+    private class FakeMechanoidRegistry : IMechanoidRegistry
+    {
+        public IReadOnlyList<ThingDef> AllMechanoids => Array.Empty<ThingDef>();
+        public IReadOnlyList<string> AllMechanoidDefNames => new[] { "MockMech" };
+        public bool IsMechanoidDef(ThingDef? def) => def?.defName == "MockMech";
+        public bool IsMechanoidDefName(string? defName) => defName == "MockMech";
+        public void ResetCache() { }
+    }
+
+    private static ThingDef CreateThingDef(string defName, ThingCategory category, bool isMechanoid, Type thingClass)
     {
         var raceProps = new RaceProperties();
         var fleshField = typeof(RaceProperties).GetField("fleshType", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);

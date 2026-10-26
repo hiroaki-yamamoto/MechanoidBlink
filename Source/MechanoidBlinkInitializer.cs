@@ -39,7 +39,10 @@ public static class MechanoidBlinkInitializer
         SyncActiveMechanoids();
     }
 
-    private static void ApplyHarmonyPatches()
+    /// <summary>
+    /// Applies Harmony patches if not already applied.
+    /// </summary>
+    public static void ApplyHarmonyPatches()
     {
         try
         {
@@ -58,7 +61,10 @@ public static class MechanoidBlinkInitializer
         }
     }
 
-    private static void InitializeSettings()
+    /// <summary>
+    /// Initializes mod settings with all available mechanoids if not previously initialized.
+    /// </summary>
+    public static void InitializeSettings()
     {
         try
         {
@@ -73,7 +79,10 @@ public static class MechanoidBlinkInitializer
         }
     }
 
-    private static void SyncActiveMechanoids()
+    /// <summary>
+    /// Synchronizes the Mechanoid Blink Hediff across all active mechanoids.
+    /// </summary>
+    public static void SyncActiveMechanoids()
     {
         try
         {

@@ -7,65 +7,32 @@ using Verse;
 namespace MechanoidBlink.Core;
 
 /// <summary>
-/// Manages the application, removal, and synchronization of the Mechanoid Blink Hediff
-/// on mechanoid pawns according to mod settings and game events.
+/// Default implementation of <see cref="IMechanoidBlinkHediffManager"/> using RimWorld engine primitives.
 /// </summary>
-/// <remarks>
-/// <para>
-/// Rather than modifying <see cref="ThingDef.comps"/> or using reflection on internal
-/// <c>AutoBlink</c> caches, this manager leverages AutoBlink's native <see cref="AutoBlink.HediffComp_AutoBlinkSource"/>
-/// by adding or removing the <c>MechanoidBlink_Hediff</c> on mechanoids.
-/// </para>
-/// <para>
-/// Operations on individual pawns execute in O(H) time and O(1) space, where H is the number of
-/// hediffs currently attached to the pawn (typically H &lt; 15). Batch operations across all maps
-/// and alive world pawns execute in O(N) time and O(1) space, where N is the total count of pawns.
-/// </para>
-/// </remarks>
-/// <example>
-/// <code>
-/// // Update a single mechanoid pawn after a faction or mental state change:
-/// MechanoidBlinkHediffManager.UpdateMechanoid(mechPawn);
-///
-/// // Synchronize all active mechanoids after mod settings are updated:
-/// MechanoidBlinkHediffManager.UpdateAllMechanoids();
-/// </code>
-/// </example>
-public static class MechanoidBlinkHediffManager
+public class RimWorldMechanoidBlinkHediffManager : IMechanoidBlinkHediffManager
 {
-    /// <summary>
-    /// The primary defName of the Mechanoid Blink Hediff.
-    /// </summary>
-    public const string HediffDefName = "MechanoidBlink_Hediff";
-
-    /// <summary>
-    /// Fallback defName for the Mechanoid Blink Hediff.
-    /// </summary>
-    public const string FallbackHediffDefName = "MechanoidBlink";
-
-    private static HediffDef? cachedHediffDef;
+    private HediffDef? cachedHediffDef;
 
     /// <summary>
     /// Resolves the <see cref="HediffDef"/> registered for Mechanoid Blink in O(1) time.
     /// </summary>
-    /// <returns>The resolved <see cref="HediffDef"/>, or <see langword="null"/> if not yet loaded.</returns>
-    public static HediffDef? GetHediffDef()
+    public virtual HediffDef? GetHediffDef()
     {
         if (cachedHediffDef != null)
         {
             return cachedHediffDef;
         }
 
-        cachedHediffDef = DefDatabase<HediffDef>.GetNamedSilentFail(HediffDefName)
-            ?? DefDatabase<HediffDef>.GetNamedSilentFail(FallbackHediffDefName);
+        cachedHediffDef = DefDatabase<HediffDef>.GetNamedSilentFail(MechanoidBlinkHediffManager.HediffDefName)
+            ?? DefDatabase<HediffDef>.GetNamedSilentFail(MechanoidBlinkHediffManager.FallbackHediffDefName);
 
         return cachedHediffDef;
     }
 
     /// <summary>
-    /// Resets the cached HediffDef reference (used primarily during unit tests or Def reload).
+    /// Resets the cached HediffDef reference.
     /// </summary>
-    public static void ResetCache()
+    public virtual void ResetCache()
     {
         cachedHediffDef = null;
     }
@@ -74,9 +41,7 @@ public static class MechanoidBlinkHediffManager
     /// Determines whether the specified <paramref name="pawn"/> currently possesses the Mechanoid Blink Hediff.
     /// Executes in O(H) time where H is the count of hediffs on the pawn.
     /// </summary>
-    /// <param name="pawn">The target <see cref="Pawn"/> to inspect.</param>
-    /// <returns><see langword="true"/> if the pawn has the hediff; otherwise, <see langword="false"/>.</returns>
-    public static bool HasHediff(Pawn? pawn)
+    public virtual bool HasHediff(Pawn? pawn)
     {
         if (pawn?.health?.hediffSet == null)
         {
@@ -95,9 +60,7 @@ public static class MechanoidBlinkHediffManager
     /// <summary>
     /// Applies the Mechanoid Blink Hediff to the specified <paramref name="pawn"/> if not already present.
     /// </summary>
-    /// <param name="pawn">The target living mechanoid <see cref="Pawn"/>.</param>
-    /// <returns><see langword="true"/> if the hediff was newly created and applied; otherwise, <see langword="false"/>.</returns>
-    public static bool ApplyHediff(Pawn? pawn)
+    public virtual bool ApplyHediff(Pawn? pawn)
     {
         if (pawn?.health == null || pawn.Dead || pawn.Destroyed)
         {
@@ -123,11 +86,10 @@ public static class MechanoidBlinkHediffManager
     }
 
     /// <summary>
-    /// Removes the Mechanoid Blink Hediff from the specified <paramref name="pawn"/> if present.
+    /// Removes the Mechanoid Blink Hediff from the specified <paramref name="pawn"/> if present in a single pass.
+    /// Executes in O(H) time without redundant presence checks.
     /// </summary>
-    /// <param name="pawn">The target <see cref="Pawn"/> to modify.</param>
-    /// <returns><see langword="true"/> if the hediff was found and removed; otherwise, <see langword="false"/>.</returns>
-    public static bool RemoveHediff(Pawn? pawn)
+    public virtual bool RemoveHediff(Pawn? pawn)
     {
         if (pawn?.health?.hediffSet == null)
         {
@@ -151,24 +113,21 @@ public static class MechanoidBlinkHediffManager
     }
 
     /// <summary>
-    /// Evaluates whether the given <paramref name="pawn"/> should have the Mechanoid Blink Hediff
-    /// according to <see cref="MechanoidBlinkMod.PermissionChecker"/>, applying or removing it accordingly.
+    /// Evaluates whether the given <paramref name="pawn"/> should have the Mechanoid Blink Hediff,
+    /// applying or removing it accordingly.
+    /// Eliminates redundant collection scanning by invoking <see cref="RemoveHediff"/> directly in 1 pass.
     /// </summary>
-    /// <param name="pawn">The <see cref="Pawn"/> to evaluate.</param>
-    public static void UpdateMechanoid(Pawn? pawn)
+    public virtual void UpdateMechanoid(Pawn? pawn)
     {
         if (pawn == null || pawn.def == null)
         {
             return;
         }
 
-        // If the pawn is dead, destroyed, or not a recognized mechanoid def, strip the hediff.
+        // If the pawn is dead, destroyed, or not a recognized mechanoid def, strip the hediff in 1 pass.
         if (pawn.Dead || pawn.Destroyed || (pawn.RaceProps != null && !pawn.RaceProps.IsMechanoid) || !MechanoidRegistry.IsMechanoidDef(pawn.def))
         {
-            if (HasHediff(pawn))
-            {
-                RemoveHediff(pawn);
-            }
+            RemoveHediff(pawn);
             return;
         }
 
@@ -188,7 +147,7 @@ public static class MechanoidBlinkHediffManager
     /// <summary>
     /// Batch-updates all mechanoids across all loaded maps and living world pawns in O(N) time and O(1) space.
     /// </summary>
-    public static void UpdateAllMechanoids()
+    public virtual void UpdateAllMechanoids()
     {
         if (Current.Game == null)
         {
@@ -244,4 +203,70 @@ public static class MechanoidBlinkHediffManager
             }
         }
     }
+}
+
+/// <summary>
+/// Manages the application, removal, and synchronization of the Mechanoid Blink Hediff
+/// on mechanoid pawns according to mod settings and game events.
+/// Static facade delegating to an injectable <see cref="IMechanoidBlinkHediffManager"/> instance.
+/// </summary>
+public static class MechanoidBlinkHediffManager
+{
+    /// <summary>
+    /// The primary defName of the Mechanoid Blink Hediff.
+    /// </summary>
+    public const string HediffDefName = "MechanoidBlink_Hediff";
+
+    /// <summary>
+    /// Fallback defName for the Mechanoid Blink Hediff.
+    /// </summary>
+    public const string FallbackHediffDefName = "MechanoidBlink";
+
+    private static IMechanoidBlinkHediffManager instance = new RimWorldMechanoidBlinkHediffManager();
+
+    /// <summary>
+    /// Gets or sets the active manager implementation.
+    /// Allows mocking and dependency injection during unit testing.
+    /// </summary>
+    public static IMechanoidBlinkHediffManager Instance
+    {
+        get => instance;
+        set => instance = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    /// <summary>
+    /// Resolves the <see cref="HediffDef"/> registered for Mechanoid Blink in O(1) time.
+    /// </summary>
+    public static HediffDef? GetHediffDef() => Instance.GetHediffDef();
+
+    /// <summary>
+    /// Resets the cached HediffDef reference.
+    /// </summary>
+    public static void ResetCache() => Instance.ResetCache();
+
+    /// <summary>
+    /// Determines whether the specified <paramref name="pawn"/> currently possesses the Mechanoid Blink Hediff.
+    /// </summary>
+    public static bool HasHediff(Pawn? pawn) => Instance.HasHediff(pawn);
+
+    /// <summary>
+    /// Applies the Mechanoid Blink Hediff to the specified <paramref name="pawn"/> if not already present.
+    /// </summary>
+    public static bool ApplyHediff(Pawn? pawn) => Instance.ApplyHediff(pawn);
+
+    /// <summary>
+    /// Removes the Mechanoid Blink Hediff from the specified <paramref name="pawn"/> if present in a single pass.
+    /// </summary>
+    public static bool RemoveHediff(Pawn? pawn) => Instance.RemoveHediff(pawn);
+
+    /// <summary>
+    /// Evaluates whether the given <paramref name="pawn"/> should have the Mechanoid Blink Hediff,
+    /// applying or removing it accordingly.
+    /// </summary>
+    public static void UpdateMechanoid(Pawn? pawn) => Instance.UpdateMechanoid(pawn);
+
+    /// <summary>
+    /// Batch-updates all mechanoids across all loaded maps and living world pawns.
+    /// </summary>
+    public static void UpdateAllMechanoids() => Instance.UpdateAllMechanoids();
 }

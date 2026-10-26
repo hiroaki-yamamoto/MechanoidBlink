@@ -85,5 +85,42 @@ public class MechanoidBlinkSettingsTests
         settings.EnsureInitialized(availableDefs);
         Assert.IsFalse(settings.IsMechTypeAllowed("Mech_Centipede"), "Second EnsureInitialized should not reset user setting");
     }
+
+    [TestMethod]
+    public void Test_SelectAll_NullCollection_DoesNotThrow()
+    {
+        var settings = new MechanoidBlinkSettings();
+        settings.SelectAll(null);
+        Assert.IsTrue(settings.initialized);
+        Assert.AreEqual(0, settings.allowedMechDefs.Count);
+    }
+
+    [TestMethod]
+    public void Test_SelectAll_FiltersOutNullOrEmpty()
+    {
+        var settings = new MechanoidBlinkSettings();
+        settings.SelectAll(new[] { "Mech_Centipede", "", null!, "Mech_Lancer" });
+        Assert.IsTrue(settings.IsMechTypeAllowed("Mech_Centipede"));
+        Assert.IsTrue(settings.IsMechTypeAllowed("Mech_Lancer"));
+        Assert.AreEqual(2, settings.allowedMechDefs.Count);
+    }
+
+    [TestMethod]
+    public void Test_SetMechTypeAllowed_NullOrEmpty_Ignored()
+    {
+        var settings = new MechanoidBlinkSettings();
+        settings.SetMechTypeAllowed("", true);
+        settings.SetMechTypeAllowed(null!, true);
+        Assert.AreEqual(0, settings.allowedMechDefs.Count);
+    }
+
+    [TestMethod]
+    public void Test_IsMechTypeAllowed_CaseInsensitive()
+    {
+        var settings = new MechanoidBlinkSettings();
+        settings.SelectAll(new[] { "Mech_Centipede" });
+        Assert.IsTrue(settings.IsMechTypeAllowed("mech_centipede"), "Lookup should be case-insensitive");
+        Assert.IsTrue(settings.IsMechTypeAllowed("MECH_CENTIPEDE"), "Lookup should be case-insensitive");
+    }
 }
 

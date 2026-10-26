@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using MechanoidBlink.Core;
 using MechanoidBlink.Settings;
 using UnityEngine;
@@ -10,15 +9,67 @@ namespace MechanoidBlink.UI;
 
 /// <summary>
 /// Handles the rendering of Mod Options UI following native RimWorld styling.
+/// Incorporates cached search filtering to eliminate per-frame allocations during OnGUI rendering.
 /// </summary>
 public static class MechanoidBlinkSettingsUi
 {
     private static Vector2 scrollPosition = Vector2.zero;
     private static string filterText = string.Empty;
+    private static string lastFilterText = string.Empty;
+    private static IReadOnlyList<ThingDef>? cachedFilteredMechs;
+    private static int lastSourceCount = -1;
+
+    /// <summary>
+    /// Filters a collection of mechanoid ThingDefs by label or defName without mutating source.
+    /// Returns the original list directly when filter text is empty, avoiding all allocations.
+    /// </summary>
+    public static IReadOnlyList<ThingDef> FilterMechanoids(IReadOnlyList<ThingDef> allMechs, string? filter)
+    {
+        if (allMechs == null || allMechs.Count == 0)
+        {
+            return Array.Empty<ThingDef>();
+        }
+
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            return allMechs;
+        }
+
+        var results = new List<ThingDef>();
+        for (int i = 0; i < allMechs.Count; i++)
+        {
+            var def = allMechs[i];
+            if (def == null)
+            {
+                continue;
+            }
+
+            if ((def.label != null && def.label.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (def.defName != null && def.defName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0))
+            {
+                results.Add(def);
+            }
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Resets cached UI filter results (used for unit testing or def reloads).
+    /// </summary>
+    public static void ResetFilterCache()
+    {
+        lastFilterText = string.Empty;
+        cachedFilteredMechs = null;
+        lastSourceCount = -1;
+    }
 
     public static void DoSettingsWindowContents(Rect inRect, MechanoidBlinkSettings settings)
     {
-        if (settings == null) return;
+        if (settings == null)
+        {
+            return;
+        }
 
         // Ensure default initialization with all available mechanoids if not yet initialized
         settings.EnsureInitialized(MechanoidRegistry.AllMechanoidDefNames);
@@ -72,7 +123,7 @@ public static class MechanoidBlinkSettingsUi
 
         // Search bar
         float searchLabelWidth = 60f;
-        float searchStartX = deselectAllRect.xMax + spacing * 2;
+        float searchStartX = deselectAllRect.xMax + (spacing * 2);
         float searchWidth = actionRow.xMax - searchStartX;
         if (searchWidth > 120f)
         {
@@ -99,16 +150,16 @@ public static class MechanoidBlinkSettingsUi
     {
         // MechanoidRegistry.AllMechanoids strictly excludes corpses
         var allMechs = MechanoidRegistry.AllMechanoids;
-        var filteredMechs = allMechs;
 
-        if (!string.IsNullOrWhiteSpace(filterText))
+        // O(1) cached filter reuse: avoid per-frame allocation and search when filter has not changed
+        if (cachedFilteredMechs == null || filterText != lastFilterText || allMechs.Count != lastSourceCount)
         {
-            filteredMechs = allMechs
-                .Where(d => (d.label != null && d.label.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0)
-                         || (d.defName != null && d.defName.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0))
-                .ToList();
+            cachedFilteredMechs = FilterMechanoids(allMechs, filterText);
+            lastFilterText = filterText;
+            lastSourceCount = allMechs.Count;
         }
 
+        var filteredMechs = cachedFilteredMechs;
         float rowHeight = 28f;
         float viewHeight = filteredMechs.Count * rowHeight;
         Rect viewRect = new Rect(0f, 0f, outRect.width - 16f, viewHeight);

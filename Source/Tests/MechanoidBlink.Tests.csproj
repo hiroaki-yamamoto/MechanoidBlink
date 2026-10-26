@@ -33,10 +33,6 @@
       <HintPath>..\..\..\..\..\..\workshop\content\294100\3493889625\1.7\Assemblies\AutoBlink.dll</HintPath>
       <Private>true</Private>
     </Reference>
-    <Reference Include="Waylith">
-      <HintPath>..\..\..\..\Waylith.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

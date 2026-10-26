@@ -34,10 +34,6 @@
       <HintPath>..\..\..\UnityStubs.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="Waylith">
-      <HintPath>..\..\..\Waylith.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -53,5 +49,9 @@
   <ItemGroup>
     <None Include=".editorconfig" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="..\1.7\Assemblies\" />
+  </Target>
 
 </Project>

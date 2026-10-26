@@ -52,11 +52,20 @@ public class MechanoidBlinkSettings : ModSettings, ISettingsProvider
     /// <summary>
     /// Selects all available mechanoid defs.
     /// </summary>
-    public void SelectAll(IEnumerable<string> allDefNames)
+    public void SelectAll(IEnumerable<string>? allDefNames)
     {
         initialized = true;
         allowedMechDefs.Clear();
         if (allDefNames == null) return;
+
+        if (allDefNames is IReadOnlyCollection<string> readOnlyCollection)
+        {
+            allowedMechDefs.EnsureCapacity(readOnlyCollection.Count);
+        }
+        else if (allDefNames is ICollection<string> collection)
+        {
+            allowedMechDefs.EnsureCapacity(collection.Count);
+        }
 
         foreach (var defName in allDefNames)
         {

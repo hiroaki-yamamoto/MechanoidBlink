@@ -153,6 +153,59 @@ public class MechanoidBlinkPermissionCheckerTests
         Assert.IsFalse(checker.IsBlinkAllowed(pawn), "Corpse mechanoid should not be allowed to blink");
     }
 
+    [TestMethod]
+    public void Test_Constructor_NullSettings_ThrowsArgumentNullException()
+    {
+        Assert.ThrowsException<ArgumentNullException>(() =>
+        {
+            _ = new MechanoidBlinkPermissionChecker(null!);
+        });
+    }
+
+    [TestMethod]
+    public void Test_DestroyedPawn_ReturnsFalse()
+    {
+        var settings = new FakeSettingsProvider { EnableFriendly = true };
+        settings.AllowedDefs.Add("Mech_Centipede");
+        var checker = new MechanoidBlinkPermissionChecker(settings);
+        var pawn = CreateMockPawn("Mech_Centipede", isMechanoid: true);
+
+        // Mark as destroyed via mapIndexOrState = -2
+        typeof(Thing).GetField("mapIndexOrState", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+            ?.SetValue(pawn, (sbyte)-2);
+
+        Assert.IsTrue(pawn.Destroyed);
+        Assert.IsFalse(checker.IsBlinkAllowed(pawn), "Destroyed pawn should not be allowed to blink");
+    }
+
+    [TestMethod]
+    public void Test_PawnWithNullDef_ReturnsFalse()
+    {
+        var settings = new FakeSettingsProvider { EnableFriendly = true };
+        var checker = new MechanoidBlinkPermissionChecker(settings);
+        var pawn = new Pawn { def = null };
+
+        Assert.IsFalse(checker.IsBlinkAllowed(pawn), "Pawn with null def should return false");
+    }
+
+    [TestMethod]
+    public void Test_PawnWithNullRaceProps_NotRestricted()
+    {
+        var settings = new FakeSettingsProvider { EnableFriendly = false };
+        var checker = new MechanoidBlinkPermissionChecker(settings);
+        var pawn = new Pawn
+        {
+            def = new ThingDef
+            {
+                defName = "UnknownEntity",
+                race = null,
+                category = ThingCategory.Pawn
+            }
+        };
+
+        Assert.IsTrue(checker.IsBlinkAllowed(pawn), "Pawn with null RaceProps should not be restricted");
+    }
+
     private static Pawn CreateMockPawn(string defName, bool isMechanoid, bool isCorpse = false)
     {
         var raceProps = new RaceProperties();
