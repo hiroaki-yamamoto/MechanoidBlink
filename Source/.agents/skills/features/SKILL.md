@@ -16,8 +16,8 @@ The UI design follows the native vanilla style of RimWorld.
 
 - Because the source code of this mod is intended to be read by humans,
   the code must be clean.
-- Especially, the code should follow the SOLID principle as far as possible.
-- As far as possible, write test code.
+- Especially, the code should follow the SOLID principle.
+- The code should be well-tested.
 
 # Feature List
 
@@ -26,7 +26,8 @@ The UI design follows the native vanilla style of RimWorld.
 
 # Settings
 
-Configured via Options > Mod Options.
+Configured via Options > Mod Options. For approach to enable AutoBlink,
+refer approach skill.
 
 1. Checkbox: Integrate [AutoBlink] into friendly mechanoids
   - If true (✅), friendly mechanoids can use [AutoBlink] abilities.

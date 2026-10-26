@@ -519,6 +519,8 @@ public class AutoBlinkIntegrationTests
         return profile;
     }
 
+
+
     private static void EnsureSoundDefRegistered(string defName)
     {
         if (DefDatabase<SoundDef>.GetNamedSilentFail(defName) == null)
