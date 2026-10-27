@@ -150,13 +150,6 @@ public class PatchUnitTests
         Assert.AreEqual(1, spyManager.UpdatedPawns.Count);
     }
 
-    [TestMethod]
-    public void Test_Patch_Hediff_AddedPart_PostAdd_HandlesNullInstanceSafely()
-    {
-        bool runOriginal = Patch_Hediff_AddedPart_PostAdd.Prefix(null!, null);
-        Assert.IsTrue(runOriginal, "Prefix should return true when instance is null");
-    }
-
     private static Pawn CreateTestPawn(bool isMechanoid)
     {
         var raceProps = new RaceProperties();

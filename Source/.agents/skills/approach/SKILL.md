@@ -30,8 +30,12 @@ The following approach will be adopted to implement this feature:
 ## Hediff Definition
 
 - Name: Mechanoid Blink
-- Description: This mechanoid can teleport at his and your will!!
-- HediffClass: Hediff_AddedPart
+- Description: This mechanoid can teleport automatically.
+- HediffClass: HediffWithComps
+- Label Color:
+  - r: 0.52
+  - g: 1.0
+  - b: 0.95
 - Target: Mechanoid
 - Body Part: Whole body
 - isBad: false

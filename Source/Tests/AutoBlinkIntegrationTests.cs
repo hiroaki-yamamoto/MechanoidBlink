@@ -19,7 +19,7 @@ namespace MechanoidBlink.Tests;
 
 /// <summary>
 /// End-to-end integration and regression tests verifying MechanoidBlink's Hediff-based
-/// AutoBlink integration, whole-body added-part safety, batch settings synchronization,
+/// AutoBlink integration, whole-body HediffWithComps safety, batch settings synchronization,
 /// and lifecycle patches across spawning, dormancy, faction, and mental state changes.
 /// </summary>
 [TestClass]
@@ -137,7 +137,7 @@ public class AutoBlinkIntegrationTests
 
     /// <summary>
     /// Verifies that the HediffDef conforms exactly to the specification in .agent/skills:
-    /// HediffClass = Hediff_AddedPart, Body Part = Whole body, isBad = false,
+    /// HediffClass = HediffWithComps, Label Color = (0.52, 1.0, 0.95), Body Part = Whole body, isBad = false,
     /// initialSeverity = 1.0, maxSeverity = 1.0, and contains HediffCompProperties_AutoBlinkSource.
     /// </summary>
     [TestMethod]
@@ -145,7 +145,10 @@ public class AutoBlinkIntegrationTests
     {
         HediffDef? def = MechanoidBlinkHediffManager.GetHediffDef();
         Assert.IsNotNull(def, "Mechanoid Blink HediffDef must be registered in DefDatabase");
-        Assert.AreEqual(typeof(Hediff_AddedPart), def.hediffClass, "HediffClass must be Hediff_AddedPart");
+        Assert.AreEqual("Mechanoid Blink", def.label, "Label must be Mechanoid Blink");
+        Assert.AreEqual("This mechanoid can teleport automatically.", def.description, "Description must match specification");
+        Assert.AreEqual(typeof(HediffWithComps), def.hediffClass, "HediffClass must be HediffWithComps");
+        Assert.AreEqual(new Color(0.52f, 1.0f, 0.95f), def.defaultLabelColor, "Label color must match specification");
         Assert.IsFalse(def.isBad, "isBad must be false");
         Assert.AreEqual(1.0f, def.initialSeverity, 0.001f, "initialSeverity must be 1.0");
         Assert.AreEqual(1.0f, def.maxSeverity, 0.001f, "maxSeverity must be 1.0");
@@ -157,12 +160,12 @@ public class AutoBlinkIntegrationTests
     }
 
     /// <summary>
-    /// Verifies that <see cref="Patch_Hediff_AddedPart_PostAdd"/> safely handles whole-body
-    /// additions (<c>Part == null</c>) without throwing <see cref="NullReferenceException"/>
-    /// and correctly triggers comp post-add logic.
+    /// Verifies that <see cref="HediffWithComps"/> safely handles whole-body additions
+    /// (<c>Part == null</c>) without throwing <see cref="NullReferenceException"/>
+    /// and correctly triggers comp post-add logic to attach the AutoBlink controller.
     /// </summary>
     [TestMethod]
-    public void Test_Patch_Hediff_AddedPart_PostAdd_HandlesNullPart()
+    public void Test_HediffWithComps_AppliedToWholeBody_InitializesAutoBlink()
     {
         HediffDef? def = MechanoidBlinkHediffManager.GetHediffDef();
         Assert.IsNotNull(def);
@@ -174,12 +177,8 @@ public class AutoBlinkIntegrationTests
             Pawn mechPawn = CreateSpawnedPawn(mechDef, playerFaction);
             mechPawn.health = new Pawn_HealthTracker(mechPawn);
 
-            Hediff_AddedPart hediff = (Hediff_AddedPart)HediffMaker.MakeHediff(def, mechPawn, null);
-            Assert.IsNull(hediff.Part, "Precondition: Part is null for whole-body added part");
-
-            // Apply through Prefix guard
-            bool runOriginal = Patch_Hediff_AddedPart_PostAdd.Prefix(hediff, null);
-            Assert.IsFalse(runOriginal, "Prefix must return false to skip vanilla child-part replacement");
+            HediffWithComps hediff = (HediffWithComps)HediffMaker.MakeHediff(def, mechPawn, null);
+            Assert.IsNull(hediff.Part, "Precondition: Part is null for whole-body hediff");
 
             // Add to health tracker
             mechPawn.health.AddHediff(hediff);
@@ -618,8 +617,9 @@ public class AutoBlinkIntegrationTests
             {
                 defName = MechanoidBlinkHediffManager.HediffDefName,
                 label = "Mechanoid Blink",
-                description = "This mechanoid can teleport at his and your will!!",
-                hediffClass = typeof(Hediff_AddedPart),
+                description = "This mechanoid can teleport automatically.",
+                hediffClass = typeof(HediffWithComps),
+                defaultLabelColor = new Color(0.52f, 1.0f, 0.95f),
                 isBad = false,
                 initialSeverity = 1.0f,
                 maxSeverity = 1.0f,
