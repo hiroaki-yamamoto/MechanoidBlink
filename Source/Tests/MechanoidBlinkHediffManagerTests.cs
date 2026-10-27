@@ -100,4 +100,19 @@ public class MechanoidBlinkHediffManagerTests
         var pawn = new Pawn { def = null };
         manager.UpdateMechanoid(pawn);
     }
+
+    [TestMethod]
+    public void Test_UpdateMechanoid_HandlesNullPawnHealthSafely()
+    {
+        var manager = new RimWorldMechanoidBlinkHediffManager();
+        var def = new ThingDef
+        {
+            defName = "Mech_Test",
+            category = ThingCategory.Pawn,
+            race = new RaceProperties()
+        };
+        var pawn = new Pawn { def = def, health = null };
+        // Should not throw NullReferenceException when pawn.health is null (e.g. during Pawn generation / PostMake)
+        manager.UpdateMechanoid(pawn);
+    }
 }

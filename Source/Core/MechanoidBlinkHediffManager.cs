@@ -62,7 +62,7 @@ public class RimWorldMechanoidBlinkHediffManager : IMechanoidBlinkHediffManager
     /// </summary>
     public virtual bool ApplyHediff(Pawn? pawn)
     {
-        if (pawn?.health == null || pawn.Dead || pawn.Destroyed)
+        if (pawn == null || pawn.health == null || pawn.Destroyed || pawn.Dead)
         {
             return false;
         }
@@ -91,7 +91,7 @@ public class RimWorldMechanoidBlinkHediffManager : IMechanoidBlinkHediffManager
     /// </summary>
     public virtual bool RemoveHediff(Pawn? pawn)
     {
-        if (pawn?.health?.hediffSet == null)
+        if (pawn == null || pawn.health?.hediffSet == null)
         {
             return false;
         }
@@ -119,13 +119,13 @@ public class RimWorldMechanoidBlinkHediffManager : IMechanoidBlinkHediffManager
     /// </summary>
     public virtual void UpdateMechanoid(Pawn? pawn)
     {
-        if (pawn == null || pawn.def == null)
+        if (pawn == null || pawn.def == null || pawn.health == null)
         {
             return;
         }
 
         // If the pawn is dead, destroyed, or not a recognized mechanoid def, strip the hediff in 1 pass.
-        if (pawn.Dead || pawn.Destroyed || (pawn.RaceProps != null && !pawn.RaceProps.IsMechanoid) || !MechanoidRegistry.IsMechanoidDef(pawn.def))
+        if (pawn.Destroyed || pawn.Dead || (pawn.RaceProps != null && !pawn.RaceProps.IsMechanoid) || !MechanoidRegistry.IsMechanoidDef(pawn.def))
         {
             RemoveHediff(pawn);
             return;
